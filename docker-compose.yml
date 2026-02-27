@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  robot-control-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: robot-control-web:latest
+    container_name: robot-control-web
+    ports:
+      - "8009:8009"
+    environment:
+      - NODE_ENV=production
+      - PORT=8009
+    volumes:
+      # Mount scripts directory for easy updates
+      - ./scripts:/app/scripts:ro
+      # Mount bags directory if needed
+      - ./bags:/app/bags
+    networks:
+      - robot-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8009" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  robot-network:
+    driver: bridge
+
+# To save Docker image as tar file, use:
+# docker save robot-control-web:latest -o robot-control-web.tar
+#
+# To load Docker image from tar file, use:
+# docker load -i robot-control-web.tar
